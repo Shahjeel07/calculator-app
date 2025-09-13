@@ -1,0 +1,292 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Neon Glass Calculator</title>
+<style>
+  :root{
+    --bg:#0f1724;
+    --panel:#0b1220;
+    --neon:#00f0a8;
+    --accent:#7c5cff;
+    --glass: rgba(255,255,255,0.04);
+    --muted: rgba(255,255,255,0.6);
+  }
+  html,body{height:100%;margin:0;background:
+    radial-gradient(1200px 600px at 10% 10%, rgba(124,92,255,0.12), transparent 10%),
+    radial-gradient(1000px 500px at 90% 90%, rgba(0,240,168,0.06), transparent 10%),
+    var(--bg);
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    -webkit-font-smoothing:antialiased;
+    color:#e6eef8;
+  }
+  .wrap{
+    min-height:100%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:40px 20px;
+    box-sizing:border-box;
+  }
+  .calc {
+    width:360px;
+    max-width:95vw;
+    border-radius:20px;
+    padding:20px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    box-shadow: 0 10px 30px rgba(2,6,23,0.7), inset 0 1px 0 rgba(255,255,255,0.02);
+    backdrop-filter: blur(8px) saturate(120%);
+    border: 1px solid rgba(255,255,255,0.03);
+    position:relative;
+    overflow:hidden;
+  }
+  /* neon glow decor */
+  .calc::before, .calc::after{
+    content:"";
+    position:absolute;
+    width:420px;height:420px;pointer-events:none;
+    filter:blur(60px);
+    opacity:0.6;
+  }
+  .calc::before{background: radial-gradient(circle at 30% 20%, rgba(124,92,255,0.45), transparent 20%); top:-140px; left:-100px;}
+  .calc::after{background: radial-gradient(circle at 80% 80%, rgba(0,240,168,0.35), transparent 20%); bottom:-120px; right:-80px;}
+
+  .header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+    margin-bottom:14px;
+  }
+  .brand{
+    display:flex;align-items:center;gap:12px;
+  }
+  .logo{
+    width:44px;height:44px;border-radius:10px;
+    background: linear-gradient(135deg,var(--accent),var(--neon));
+    box-shadow: 0 6px 18px rgba(124,92,255,0.18), 0 0 18px rgba(0,240,168,0.06);
+    display:flex;align-items:center;justify-content:center;font-weight:700;color:#031024;
+    font-size:18px;
+  }
+  .title{
+    font-size:14px;letter-spacing:0.4px;color:var(--muted);
+  }
+  .screen{
+    background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.02));
+    border-radius:12px;padding:18px 16px;margin-bottom:18px;
+    min-height:96px; display:flex;flex-direction:column;justify-content:space-between;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.02);
+  }
+  .expr{font-size:18px;color:rgba(255,255,255,0.7); text-align:right; word-break:break-all;}
+  .res{font-size:32px;font-weight:700;color:var(--neon); text-align:right; margin-top:6px;}
+  .pad{
+    display:grid;
+    grid-template-columns: repeat(4,1fr);
+    gap:12px;
+  }
+  button.key{
+    border:0;padding:16px;border-radius:12px;font-size:18px;font-weight:700;
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.03));
+    color:#eaf6f0; cursor:pointer; position:relative;
+    box-shadow: 0 6px 16px rgba(2,6,23,0.6), 0 2px 6px rgba(0,0,0,0.4);
+    transition: transform 120ms cubic-bezier(.2,.9,.2,1), box-shadow 120ms;
+    overflow:hidden;
+  }
+  button.key:active{ transform: translateY(2px) scale(0.996); box-shadow: 0 2px 6px rgba(2,6,23,0.6); }
+  button.key.op{
+    background: linear-gradient(180deg, rgba(124,92,255,0.18), rgba(0,240,168,0.06));
+    color:#031024;
+    box-shadow: 0 8px 28px rgba(124,92,255,0.12), 0 0 20px rgba(0,240,168,0.06);
+  }
+  button.key.eq{
+    grid-column: span 2; background: linear-gradient(90deg, rgba(0,240,168,0.14), rgba(124,92,255,0.14));
+    color:#001918;
+  }
+
+  .footer{margin-top:14px;display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--muted);}
+  .smallbtn{background:transparent;border:1px solid rgba(255,255,255,0.03);padding:6px 10px;border-radius:8px;color:var(--muted);cursor:pointer;}
+  .hint{opacity:0.7}
+
+  /* responsive */
+  @media (max-width:420px){
+    .calc{width:100%}
+    .res{font-size:28px}
+  }
+
+  /* glowing ripple */
+  .ripple {
+    position:absolute; border-radius:50%; transform:translate(-50%,-50%); pointer-events:none;
+    background: radial-gradient(circle, rgba(255,255,255,0.12), transparent 40%);
+    animation: ripple 600ms ease-out;
+  }
+  @keyframes ripple{ from{opacity:0.8; transform:translate(-50%,-50%) scale(0.2);} to{opacity:0; transform:translate(-50%,-50%) scale(2);} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="calc" id="calc">
+    <div class="header">
+      <div class="brand">
+        <div class="logo">NC</div>
+        <div>
+          <div class="title">NeonCalc</div>
+          <div style="font-size:12px;color:var(--muted)">Simple • Fast • Stylish</div>
+        </div>
+      </div>
+      <div>
+        <button class="smallbtn" id="themeToggle" title="Toggle theme">Theme</button>
+      </div>
+    </div>
+
+    <div class="screen" id="screen">
+      <div class="expr" id="expr">0</div>
+      <div class="res" id="res">0</div>
+    </div>
+
+    <div class="pad" id="pad">
+      <!-- Buttons will be populated by JS -->
+    </div>
+
+    <div class="footer">
+      <div class="hint">Tap buttons or use keyboard. Swipe left on result to copy.</div>
+      <div>v1.0</div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const layout = [
+    "C","⌫","%","/",
+    "7","8","9","*",
+    "4","5","6","-",
+    "1","2","3","+",
+    "±","0",".","=",
+  ];
+  const pad = document.getElementById('pad');
+  const exprEl = document.getElementById('expr');
+  const resEl = document.getElementById('res');
+  const calc = document.getElementById('calc');
+
+  let expr = '';
+  let result = '0';
+  let lastWasOp = false;
+
+  function createKey(label){
+    const btn = document.createElement('button');
+    btn.className = 'key' + (['/','*','-','+','%'].includes(label)?' op':'') + (label==='='?' eq':'');
+    btn.textContent = label;
+    btn.addEventListener('click', (e)=>{
+      ripple(e);
+      handle(label);
+    });
+    return btn;
+  }
+
+  layout.forEach(l => pad.appendChild(createKey(l)));
+
+  function update(){
+    exprEl.textContent = expr || '0';
+    resEl.textContent = result;
+  }
+
+  function safeEval(s){
+    try{
+      // Basic replacements and safety checks
+      s = s.replace(/×/g,'*').replace(/÷/g,'/').replace(/--/g,'+');
+      // Disallow letters
+      if (/[a-zA-Z]/.test(s)) throw 'bad';
+      // eslint-disable-next-line no-eval
+      let val = eval(s);
+      if (typeof val === 'number' && !isFinite(val)) return 'Infinity';
+      return (Math.round((val + Number.EPSILON)*1e12)/1e12).toString();
+    }catch(e){ return 'Error' }
+  }
+
+  function handle(k){
+    if (k === 'C'){ expr=''; result='0'; lastWasOp=false; update(); return; }
+    if (k === '⌫'){ expr = expr.slice(0,-1); result = expr? safeEval(expr):'0'; update(); return; }
+    if (k === '±'){ if (!expr) return; if (expr[0]==='-') expr = expr.slice(1); else expr = '-'+expr; result = safeEval(expr); update(); return; }
+    if (k === '='){ result = safeEval(expr); expr = result==='Error' ? '' : result; lastWasOp = true; update(); return; }
+    if (['/','*','-','+','%'].includes(k)){
+      if (!expr) { if (k === '-') { expr = '-'; update(); return; } else return; }
+      if (lastWasOp){ expr = expr.slice(0,-1) + k; } else { expr += k; }
+      lastWasOp = true;
+      result = safeEval(expr.slice(0,-1));
+      update();
+      return;
+    }
+    // number or dot
+    expr += k;
+    lastWasOp = false;
+    result = safeEval(expr);
+    update();
+  }
+
+  // keyboard support
+  window.addEventListener('keydown', (e)=>{
+    const keymap = {
+      Enter:'=', '=':'=', Backspace:'⌫', Escape:'C',
+      '/':'/','*':'*','-':'-','+':'+','.':'.','%':'%'
+    };
+    if (keymap[e.key]) { handle(keymap[e.key]); e.preventDefault(); return; }
+    if (/^\d$/.test(e.key)) { handle(e.key); }
+  });
+
+  // ripple effect
+  function ripple(e){
+    const r = document.createElement('div');
+    r.className = 'ripple';
+    const rect = calc.getBoundingClientRect();
+    r.style.left = (e.clientX - rect.left) + 'px';
+    r.style.top = (e.clientY - rect.top) + 'px';
+    r.style.width = r.style.height = '160px';
+    calc.appendChild(r);
+    setTimeout(()=> r.remove(), 700);
+  }
+
+  // copy on swipe left on result (touch)
+  let startX = null;
+  resEl.addEventListener('touchstart', (e)=> startX = e.touches[0].clientX );
+  resEl.addEventListener('touchend', (e)=>{
+    if (startX === null) return;
+    let endX = (e.changedTouches && e.changedTouches[0].clientX) || 0;
+    if (startX - endX > 50){ // swipe left
+      navigator.clipboard && navigator.clipboard.writeText(result);
+      resEl.textContent = 'Copied ✓';
+      setTimeout(()=> resEl.textContent = result, 900);
+    }
+    startX = null;
+  });
+
+  // theme toggle (simple invert)
+  document.getElementById('themeToggle').addEventListener('click', ()=>{
+    document.body.classList.toggle('alt');
+    if (document.body.classList.contains('alt')){
+      document.documentElement.style.setProperty('--neon','#ff7ac6');
+      document.documentElement.style.setProperty('--accent','#00b3ff');
+    } else {
+      document.documentElement.style.setProperty('--neon','#00f0a8');
+      document.documentElement.style.setProperty('--accent','#7c5cff');
+    }
+    ripletemp();
+  });
+
+  // small vibrancy tweak on theme change
+  function ripletemp(){
+    const tmp = document.createElement('div');
+    tmp.className='ripple';
+    tmp.style.left='50%'; tmp.style.top='50%'; tmp.style.width=tmp.style.height='520px';
+    calc.appendChild(tmp); setTimeout(()=>tmp.remove(),600);
+  }
+
+  // initial
+  update();
+
+})();
+</script>
+</body>
+</html>
